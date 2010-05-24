@@ -38,11 +38,17 @@ sub _make_app_class {
   $self->_make_x_isa_y($into, $self->_app_base_class);
 
   my $cmd_base = $into->_default_command_base;
-  unless (
-    eval { $cmd_base->isa( $self->_command_base_class ) }
-    or
-    eval "require $cmd_base; 1"
-  ) {
+  Carp::carp "requiring $cmd_base";
+  my $require_ok = eval "require $cmd_base; 1";
+  if (! $require_ok) {
+    # require may go wrong for two reasons: the file does not exist
+    # (which is OK for us) or it contains errors (which is NOT OK).
+    # In the former case there is no related entry in %main::INC.
+    (my $inc_entry = "$cmd_base.pm") =~ s{::}{/}gmxs;
+    Carp::confess $@ if exists $main::INC{$inc_entry};
+    use Data::Dumper; Carp::carp Dumper(\%main::INC);
+  }
+  unless (eval { $cmd_base->isa( $self->_command_base_class ) }) {
     my $base = $self->_command_base_class;
     Sub::Install::install_sub({
       code => sub { $base },
