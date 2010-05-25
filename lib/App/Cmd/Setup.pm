@@ -110,7 +110,6 @@ sub _make_app_class {
   $self->_make_x_isa_y($into, $self->_app_base_class);
 
   my $cmd_base = $into->_default_command_base;
-  Carp::carp "requiring $cmd_base";
   my $require_ok = eval "require $cmd_base; 1";
   if (! $require_ok) {
     # require may go wrong for two reasons: the file does not exist
